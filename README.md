@@ -43,12 +43,13 @@ Install Docker CE on Ubuntu 24.04
    sudo usermod -aG docker $USER
    ```
 
+-----------------------------------
+
 Install **Minikube**
 ```
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 ```
-
 
 Install **kubectl** (Kubernetes CLI)
 
@@ -61,6 +62,8 @@ Install **helm**
     chmod 700 get_helm.sh
     ./get_helm.sh
 
+-----------------------------------
+
 Start minikube with 2 nodes ( one control plane & one worker )
 ```
 minikube start --driver=docker --nodes=2
@@ -71,6 +74,8 @@ Verify if cluster is running, also check system pods
 kubectl get no
 kubectl get po -A
 ```
+
+-----------------------------------
 
 Deploy MySQL Cluster through Helm installation ( 1 primary, 2 secondary ) in db namespace. Set root password & replication password of your choice
 ```
@@ -106,6 +111,8 @@ CREATE TABLE IF NOT EXISTS client_ips (
 );
 ```
 
+-----------------------------------
+
 Deploy the application by running below command
 ```
 kubectl -n web apply -f k8s-manifests/
@@ -113,7 +120,9 @@ kubectl -n web apply -f k8s-manifests/
 
 This will deploy the Deployment, Secret, ConfigMap & NodePort Service
 
-We will need some kind of proxy to log the actual IP address of the client. So we will install nginx and configure it to pass the real IP of the client
+-----------------------------------
+
+We will need some kind of proxy to log the actual IP address of the client. So we will install **Nginx** and configure it to pass the real IP of the client
 ```
 apt update
 apt install nginx -y
@@ -140,9 +149,11 @@ server {
 
 ```
 
+-----------------------------------
+
 Test the API by running below command on port 80 
 ```
-curl -X POST http://public_ip/log-ip
+curl -X POST http://ec2_public_ip/log-ip
 ```
 
 This will log the IP in the database and display a json response as below
@@ -153,6 +164,8 @@ mac@Macs-Air Downloads % curl -X POST http://44.210.146.222/log-ip
   "Time": "19 May 2025 02:03 PM"
 }
 ```
+
+-----------------------------------
 
 To test database replication, first check the **Primary** db
 ```
