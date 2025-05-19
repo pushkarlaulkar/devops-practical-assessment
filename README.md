@@ -71,3 +71,21 @@ Verify if cluster is running, also check system pods
 kubectl get no
 kubectl get po -A
 ```
+
+Deploy MySQL Cluster through Helm installation ( 1 primary, 2 secondary ) in db namespace. Set root password & replication password of your choice
+```
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+helm install mysql-cluster bitnami/mysql \
+--namespace db \
+--create-namespace \
+--set architecture=replication \
+--set auth.rootPassword= \
+--set auth.replicationPassword= \
+--set primary.persistence.enabled=true \
+--set primary.persistence.size=1Gi \
+--set secondary.replicaCount=2 \
+--set secondary.persistence.enabled=true \
+--set secondary.persistence.size=1Gi \
+--set volumePermissions.enabled=true    #To fix file system permissions automatically ( without this you might error similar to mkdir: cannot create directory '/bitnami/mysql/data': Permission denied )
+```
