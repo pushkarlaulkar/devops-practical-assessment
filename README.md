@@ -105,3 +105,62 @@ CREATE TABLE IF NOT EXISTS client_ips (
     ip_address VARCHAR(45)
 );
 ```
+
+Deploy the application by running below command
+```
+kubectl -n web apply -f k8s-manifests/
+```
+
+This will deploy the Deployment, Secret, ConfigMap & NodePort Service
+
+Test the API by running below command
+```
+curl -X POST http://public_ip:node_port/log-ip
+```
+
+This will log the IP in the database and display a json response as below
+```
+{
+  "Client IP": "192.168.49.2", #Here minikube IP is logged
+  "Time": "19 May 2025 12:27 PM"
+}
+```
+To test database replication, first check the primary db
+```
+ubuntu@ip-172-31-93-224:~/devops-practical-assessment/k8s-manifests$ kubectl exec -it -n db mysql-cluster-primary-0 -- bash
+Defaulted container "mysql" out of: mysql, preserve-logs-symlinks (init), volume-permissions (init)
+I have no name!@mysql-cluster-primary-0:/$ mysql -uroot -p 
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 194
+Server version: 9.3.0 Source distribution
+
+Copyright (c) 2000, 2025, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> use flaskdb;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> show tables;
++-------------------+
+| Tables_in_flaskdb |
++-------------------+
+| client_ips        |
++-------------------+
+1 row in set (0.002 sec)
+
+mysql> select * from client_ips;
++----+--------------+
+| id | ip_address   |
++----+--------------+
+|  1 | 192.168.49.2 |
++----+--------------+
+1 row in set (0.001 sec)
+```
