@@ -89,3 +89,19 @@ helm install mysql-cluster bitnami/mysql \
 --set secondary.persistence.size=1Gi \
 --set volumePermissions.enabled=true    #To fix file system permissions automatically ( without this you might error similar to mkdir: cannot create directory '/bitnami/mysql/data': Permission denied )
 ```
+
+Minikube uses hostPath volumes by default for standard storage class, and sometimes the default permissions don't match the container's UID.
+
+Create the Table in MySQL which will store the Client IP
+```
+kubectl exec -it -n db mysql-cluster-primary-0 -- bash
+mysql -uroot -p ( Enter root user password when prompted )
+
+CREATE DATABASE IF NOT EXISTS flaskdb;
+USE flaskdb;
+
+CREATE TABLE IF NOT EXISTS client_ips (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45)
+);
+```
