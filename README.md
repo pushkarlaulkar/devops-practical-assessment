@@ -113,20 +113,48 @@ kubectl -n web apply -f k8s-manifests/
 
 This will deploy the Deployment, Secret, ConfigMap & NodePort Service
 
-Test the API by running below command
+We will need some kind of proxy to log the actual IP address of the client. So we will install nginx and configure it to pass the real IP of the client
 ```
-curl -X POST http://public_ip:node_port/log-ip
+apt update
+apt install nginx -y
+```
+Edit the default site:
+```
+sudo nano /etc/nginx/sites-available/default
+```
+Replace the server block with:
+```
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://minikube_ip:nodeport_ip;
+
+        # Preserve client IP
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+```
+
+Test the API by running below command on port 80 
+```
+curl -X POST http://public_ip/log-ip
 ```
 
 This will log the IP in the database and display a json response as below
 ```
+mac@Macs-Air Downloads % curl -X POST http://44.210.146.222/log-ip      
 {
-  "Client IP": "192.168.49.2", #Here minikube IP is logged
-  "Time": "19 May 2025 12:27 PM"
+  "Client IP": "94.203.127.227",
+  "Time": "19 May 2025 02:03 PM"
 }
 ```
 
-To test database replication, first check the primary db
+To test database replication, first check the **Primary** db
 ```
 ubuntu@ip-172-31-93-224:~/devops-practical-assessment/k8s-manifests$ kubectl exec -it -n db mysql-cluster-primary-0 -- bash
 Defaulted container "mysql" out of: mysql, preserve-logs-symlinks (init), volume-permissions (init)
@@ -158,15 +186,17 @@ mysql> show tables;
 1 row in set (0.002 sec)
 
 mysql> select * from client_ips;
-+----+--------------+
-| id | ip_address   |
-+----+--------------+
-|  1 | 192.168.49.2 |
-+----+--------------+
-1 row in set (0.001 sec)
++----+----------------+
+| id | ip_address     |
++----+----------------+
+|  1 | 192.168.49.2   |
+|  2 | 192.168.49.2   |
+|  3 | 94.203.127.227 |
++----+----------------+
+3 rows in set (0.000 sec)
 ```
 
-Next check the same for replication pod as below
+Next check the same for **Replication** pod as below
 ```
 ubuntu@ip-172-31-93-224:~/devops-practical-assessment$ kubectl exec -it -n db mysql-cluster-secondary-0 -- bash
 Defaulted container "mysql" out of: mysql, preserve-logs-symlinks (init), volume-permissions (init)
@@ -198,10 +228,12 @@ mysql> show tables;
 1 row in set (0.002 sec)
 
 mysql> select * from client_ips;
-+----+--------------+
-| id | ip_address   |
-+----+--------------+
-|  1 | 192.168.49.2 |
-+----+--------------+
-1 row in set (0.000 sec)
++----+----------------+
+| id | ip_address     |
++----+----------------+
+|  1 | 192.168.49.2   |
+|  2 | 192.168.49.2   |
+|  3 | 94.203.127.227 |
++----+----------------+
+3 rows in set (0.000 sec)
 ```
