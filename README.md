@@ -60,3 +60,14 @@ Install **helm**
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
     chmod 700 get_helm.sh
     ./get_helm.sh
+
+Start minikube with 2 nodes ( one control plane & one worker )
+```
+minikube start --driver=docker --nodes=2
+```
+
+Verify if cluster is running, also check system pods
+```
+kubectl get no
+kubectl get po -A
+```
